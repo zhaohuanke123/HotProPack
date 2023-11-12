@@ -1,0 +1,8 @@
+[
+	{"ItemID":1,"Name":"上海车牌","Description":"很贵","Icon":"Item#0001","Type":1,"Quality":3,"CanSell":1,"CellGold":100000,"UseEffect":0,"UseNumerical":0},
+	{"ItemID":2,"Name":"奶酪","Description":"很好吃","Icon":"Item#0003","Type":1,"Quality":1,"CanSell":0,"CellGold":0,"UseEffect":1,"UseNumerical":30},
+	{"ItemID":3,"Name":"鹰角弓","Description":"加敏捷","Icon":"Item#0005","Type":2,"Quality":4,"CanSell":1,"CellGold":3200,"UseEffect":0,"UseNumerical":0},
+	{"ItemID":4,"Name":"羊刀","Description":"武也","Icon":"Item#0029","Type":2,"Quality":5,"CanSell":1,"CellGold":4800,"UseEffect":0,"UseNumerical":0},
+	{"ItemID":5,"Name":"风杖卷轴","Description":"吹起来","Icon":"Item#0030+","Type":3,"Quality":4,"CanSell":1,"CellGold":1200,"UseEffect":0,"UseNumerical":0},
+	{"ItemID":6,"Name":"红杖卷轴","Description":"电死你","Icon":"Item#0034+","Type":3,"Quality":4,"CanSell":1,"CellGold":1200,"UseEffect":0,"UseNumerical":0}
+]
