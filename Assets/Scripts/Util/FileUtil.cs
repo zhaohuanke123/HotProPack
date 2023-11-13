@@ -6,11 +6,15 @@ namespace vanko.Util
     {
         public static string GetFileMD5(string filePath)
         {
+            if (!File.Exists(filePath))
+            {
+                return "";
+            }
             var stream = new FileStream(filePath, FileMode.Open);
             var md5 = System.Security.Cryptography.MD5.Create();
             var hash = md5.ComputeHash(stream);
             stream.Close();
-            return System.BitConverter.ToString(hash).Replace("-", "");
+            return System.BitConverter.ToString(hash).Replace("-", "").ToLower();
         }
     }
 }
