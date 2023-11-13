@@ -6,6 +6,15 @@ using System.IO;
 
 public class ExportAB
 {
+    [MenuItem("AB包导出/Test")]
+    public static void Test()
+    {
+        string path = Application.streamingAssetsPath;
+        path = Path.Combine(path, "AssetBundles/");
+        path = Path.GetFullPath(path);
+        Debug.Log(path);
+    }
+
     [MenuItem("AB包导出/Windows")]
     public static void ForWindows()
     {
@@ -39,7 +48,7 @@ public class ExportAB
         path = path.Substring(0, path.Length - 7) + "/DataPath/AB/";
 
         //防止路径不存在
-        if(!Directory.Exists(path))
+        if (!Directory.Exists(path))
         {
             Directory.CreateDirectory(path);
         }

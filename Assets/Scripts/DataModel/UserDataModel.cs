@@ -52,6 +52,11 @@ namespace vanko.DataModel
             return JsonMapper.ToObject(json);
         }
 
+        public static void WriteAllData(JsonData data)
+        {
+            File.WriteAllText(FilePath, data.ToJson());
+        }
+
         //获得完整的我的道具数据（动态数据和静态数据）
         public static JsonData ReadCompleteMyItemsData()
         {

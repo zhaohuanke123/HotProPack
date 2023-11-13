@@ -9,6 +9,7 @@ using Feif.UIFramework;
 using UnityEngine;
 using UnityEngine.Experimental.GlobalIllumination;
 using UnityEngine.Networking;
+using UnityEngine.PlayerLoop;
 using vanko.Config;
 
 namespace vanko.Util
@@ -18,15 +19,20 @@ namespace vanko.Util
         public string currentDownloadFile;
         public float currentDownloadProgress;
         public static string remoteUrl = "http://localhost/downloads/";
+
         public event Action<float, string> OnUpdate;
+
+        // 更新完成事件
+        public event Action OnComplete;
 
         // 存放待下载文件列表
         private List<UpdateData> updateDataList = new List<UpdateData>();
         private float totalSize = 0;
         private float currentDownloadSize = 0;
 
-        public void Init()
+        public async Task Init()
         {
+            await Task.Run(() => { StartDownLoad(); });
         }
 
         public async Task StartDownLoad()
@@ -45,46 +51,70 @@ namespace vanko.Util
             // Json保存到字典
             var md5Data = JsonUtility.FromJson<MD5DataList>(md5DataText);
 
-            foreach (var p in md5Data.md5Dict)
+            // 从本地读取md5文件
+            OnUpdate?.Invoke(0, "正在计算需要下载的文件...");
+            var localMd5Path = LoadConfig.dataPath + "/md5.json";
+            if (!File.Exists(localMd5Path))
             {
-                string file = p.file;
-                string md5 = p.md5;
-                string path = p.path;
-                Debug.Log("文件：" + file + "，MD5：" + md5);
+                File.WriteAllText(localMd5Path, md5DataText);
+                md5Data.md5Dict.ForEach(p =>
+                {
+                    updateDataList.Add(p);
+                    totalSize += p.size;
+                });
+            }
+            else
+            {
+                var localMd5DataText = File.ReadAllText(localMd5Path);
+                var localMd5Data = JsonUtility.FromJson<MD5DataList>(localMd5DataText);
+                // 比较md5，获取需要更新的文件列表
+                for (var i = 0; i < md5Data.md5Dict.Count; i++)
+                {
+                    var p = md5Data.md5Dict[i];
+                    var localP = localMd5Data.md5Dict.Find(x => x.file == p.file);
+                    if (localP == null || localP.md5 != p.md5)
+                    {
+                        updateDataList.Add(p);
+                        totalSize += p.size;
+                    }
 
-                // 获取本地相同路径文件，如果不存在或者md5不同则下载
-                string localPath = LoadConfig.dataPath + file;
-                var localMd5 = FileUtil.GetFileMD5(localPath);
-                if (localMd5 == "")
-                {
-                    totalSize += p.size;
-                    updateDataList.Add(p);
+                    OnUpdate?.Invoke((float)i / md5Data.md5Dict.Count, "正在计算需要下载的文件...");
                 }
-                else if (localMd5 != md5)
+
+                // 删除在localmd5列表中且不在md5列表中的文件
+                for (var i = 0; i < localMd5Data.md5Dict.Count; i++)
                 {
-                    totalSize += p.size;
-                    updateDataList.Add(p);
+                    var p = localMd5Data.md5Dict[i];
+                    var md5P = md5Data.md5Dict.Find(x => x.file == p.file);
+                    if (md5P == null)
+                    {
+                        File.Delete(LoadConfig.dataPath + p.file);
+                    }
                 }
             }
+
+            OnUpdate?.Invoke(1, "正在计算需要下载的文件...");
 
             Debug.Log("需要下载文件数量：" + updateDataList.Count);
             Debug.Log("需要下载文件总大小：" + totalSize);
             for (int i = 0; i < updateDataList.Count; i++)
             {
                 var p = updateDataList[i];
-                await DownLoadFile(p.path, p.file, p.size);
+                if (!Directory.Exists(LoadConfig.dataPath + p.path))
+                {
+                    Directory.CreateDirectory(LoadConfig.dataPath + p.path);
+                }
+
+                await DownLoadFile(p.file, p.size);
             }
 
             OnUpdate?.Invoke(1, "下载完成！");
+            await Task.Delay(TimeSpan.FromSeconds(1));
+            OnComplete?.Invoke();
         }
 
-        public async Task DownLoadFile(string path, string file, float size)
+        async Task DownLoadFile(string file, float size)
         {
-            if (!Directory.Exists(LoadConfig.dataPath + path))
-            {
-                Directory.CreateDirectory(LoadConfig.dataPath + path);
-            }
-
             UnityWebRequest request = UnityWebRequest.Get(remoteUrl + file);
 
             request.SendWebRequest();
@@ -112,13 +142,10 @@ namespace vanko.Util
                 SaveFileAsync(LoadConfig.dataPath + file, request.downloadHandler.data);
             }
         }
-        
-        public async Task SaveFileAsync(string filePath, byte[] data)
+
+        async Task SaveFileAsync(string filePath, byte[] data)
         {
-            await Task.Run(() =>
-            {
-                File.WriteAllBytes(filePath, data);
-            });
+            await Task.Run(() => { File.WriteAllBytes(filePath, data); });
         }
     }
 
